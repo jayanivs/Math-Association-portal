@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat - Math Association Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background-color: burlywood;
+      padding: 15px;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+    }
+    #chatContainer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      overflow-y: auto;
+      background: white;
+      margin: 10px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .message {
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 70%;
+      word-wrap: break-word;
+    }
+    .message.teacher {
+      background-color: #a0522d;
+      color: white;
+      align-self: flex-start;
+    }
+    .message.student {
+      background-color: #deb887;
+      color: #5a2d0c;
+      align-self: flex-end;
+    }
+    #messageForm {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #ccc;
+    }
+    #messageInput {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid burlywood;
+      border-radius: 6px;
+      outline: none;
+      font-size: 1em;
+    }
+    #sendBtn {
+      background-color: burlywood;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #sendBtn:hover {
+      background-color: #deb887;
+    }
+  </style>
+</head>
+<body>
+  <header>Chat</header>
+  <div id="chatContainer"></div>
+  <form id="messageForm">
+    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" required />
+    <button type="submit" id="sendBtn">Send</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Get query parameters for studentEmail and teacherEmail
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentEmailRaw = urlParams.get('studentEmail');
+    const teacherEmailRaw = urlParams.get('teacherEmail');
+    const roleRaw = urlParams.get('role'); // 'student' or 'teacher'
+
+    const studentEmail = studentEmailRaw ? studentEmailRaw.trim() : '';
+    const teacherEmail = teacherEmailRaw ? teacherEmailRaw.trim() : '';
+    const role = roleRaw ? roleRaw.trim() : '';
+
+    if (!studentEmail || !teacherEmail || !role) {
+      // Instead of throwing error, prompt user to enter missing info or redirect
+      const missingParams = [];
+      if (!studentEmail) missingParams.push('studentEmail');
+      if (!teacherEmail) missingParams.push('teacherEmail');
+      if (!role) missingParams.push('role');
+      let userInput;
+      if (missingParams.length === 1) {
+        userInput = prompt(`Missing parameter: ${missingParams[0]}. Please enter the value:`);
+        if (userInput) {
+          const param = missingParams[0];
+          const currentParams = {
+            studentEmail,
+            teacherEmail,
+            role
+          };
+          currentParams[param] = userInput.trim();
+          const newUrl = `${window.location.pathname}?studentEmail=${encodeURIComponent(currentParams.studentEmail)}&teacherEmail=${encodeURIComponent(currentParams.teacherEmail)}&role=${encodeURIComponent(currentParams.role)}`;
+          window.location.href = newUrl;
+        } else {
+          alert('Missing required parameter. Cannot proceed.');
+        }
+      } else {
+        userInput = prompt(`Missing parameters: ${missingParams.join(', ')}. Please enter them separated by commas in order: studentEmail, teacherEmail, role`);
+        if (userInput) {
+          const inputs = userInput.split(',').map(s => s.trim());
+          if (inputs.length === 3) {
+            const newUrl = `${window.location.pathname}?studentEmail=${encodeURIComponent(inputs[0])}&teacherEmail=${encodeURIComponent(inputs[1])}&role=${encodeURIComponent(inputs[2])}`;
+            window.location.href = newUrl;
+          } else {
+            alert('Invalid input. Please reload the page and try again.');
+          }
+        } else {
+          alert('Missing required parameters. Cannot proceed.');
+        }
+      }
+      throw new Error('Missing studentEmail, teacherEmail or role in URL parameters.');
+    }
+
+    const chatContainer = document.getElementById('chatContainer');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+
+    // Identify user to socket.io server with email and role
+    socket.emit('identify', { email: role === 'student' ? studentEmail : teacherEmail, role });
+
+    // Join a room for this student-teacher pair
+    const room = [studentEmail, teacherEmail].sort().join('_');
+    socket.emit('joinRoom', room);
+
+    // Listen for incoming chat messages
+    socket.on('chat message', (msg) => {
+      if (msg.room === room) {
+        displayMessage(msg);
+      }
+    });
+
+    // Display a chat message in the chat container
+    function displayMessage(msg) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message');
+      msgDiv.classList.add(msg.sender === 'teacher' ? 'teacher' : 'student');
+      msgDiv.textContent = msg.message;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Load previous messages via HTTP fetch
+    function loadMessages() {
+      fetch(`/chat-messages?studentEmail=${encodeURIComponent(studentEmail)}&teacherEmail=${encodeURIComponent(teacherEmail)}`)
+        .then(response => response.json())
+        .then(messages => {
+          chatContainer.innerHTML = '';
+          messages.forEach(displayMessage);
+        })
+        .catch(error => {
+          console.error('Error loading messages:', error);
+        });
+    }
+
+    loadMessages();
+
+    // Handle sending new message via socket.io
+    messageForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      const msgObj = {
+        room,
+        studentEmail,
+        teacherEmail,
+        sender: role, // sender is 'student' or 'teacher'
+        message,
+      };
+
+      socket.emit('chat message', msgObj);
+      messageInput.value = '';
+      displayMessage(msgObj);
+    });
+  </script>
+</body>
+</html>

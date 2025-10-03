@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teacher Dashboard - Math Association Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+    }
+    nav {
+      background-color: burlywood;
+      display: flex;
+      justify-content: space-around;
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 8px 15px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+    nav a:hover {
+      background-color: #deb887;
+    }
+    main {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #a0522d;
+    }
+    section {
+      margin-top: 30px;
+    }
+    /* Notification styles */
+    .notification {
+      border: 1px solid burlywood;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #fff3e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .notification button {
+      background-color: burlywood;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .notification button:hover {
+      background-color: #deb887;
+    }
+    /* Calendar styles */
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+    .calendar div {
+      background: burlywood;
+      color: white;
+      padding: 10px 0;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .calendar .day {
+      background: #f0e6d2;
+      color: #a0522d;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      border-radius: 5px;
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .calendar .day:hover {
+      background-color: #deb887;
+      color: white;
+    }
+    /* Event details modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      animation: slideDown 0.4s ease forwards;
+    }
+    @keyframes slideDown {
+      from {transform: translateY(-50px); opacity: 0;}
+      to {transform: translateY(0); opacity: 1;}
+    }
+    .close-btn {
+      background: burlywood;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      float: right;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .close-btn:hover {
+      background-color: #deb887;
+    }
+    /* Responsive */
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .calendar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="#" id="nav-home">Home</a>
+    <a href="#" id="nav-notifications">Notifications</a>
+    <a href="#" id="nav-calendar">Calendar</a>
+    <a href="#" id="nav-library">Library</a>
+    <a href="#" id="nav-members">Association Members</a>
+  <a href="#" id="nav-logout" style="color:white; font-weight:bold; margin-left:auto; cursor:pointer;">Logout</a>
+  </nav>
+  <script>
+    document.getElementById('nav-logout').addEventListener('click', e => {
+      e.preventDefault();
+      // Redirect to login page on logout
+      window.location.href = 'login.html';
+    });
+  </script>
+  <main>
+    <section id="home-section">
+      <h1>Welcome to the Math Association Portal - Teacher</h1>
+      <p>This portal is designed for teachers to manage events, connect with students, and access resources.</p>
+    </section>
+    <section id="notifications-section" style="display:none;">
+      <h1>Connection Requests</h1>
+      <div id="notificationsList">
+        <!-- Notifications will be loaded here -->
+      </div>
+    </section>
+    <section id="calendar-section" style="display:none;">
+      <h1>Event Calendar</h1>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px;">
+        <button id="prevMonthBtn">Previous Month</button>
+        <div id="monthYearDisplay" style="font-weight: bold; font-size: 1.2em; color: #a0522d;"></div>
+        <button id="nextMonthBtn">Next Month</button>
+      </div>
+      <div class="calendar" id="calendar">
+        <!-- Days and dates will be generated by JS -->
+      </div>
+      <div class="modal" id="eventModal">
+        <div class="modal-content">
+          <button class="close-btn" id="closeModalBtn">Close</button>
+          <h2 id="eventTitle"></h2>
+          <p id="eventDescription"></p>
+          <p><strong>Date:</strong> <span id="eventDate"></span></p>
+          <button id="registerBtn">Register for this event</button>
+          <form class="registration-form" id="registrationForm">
+            <label for="regName">Name:</label>
+            <input type="text" id="regName" name="regName" required />
+            <label for="regEmail">Email:</label>
+            <input type="email" id="regEmail" name="regEmail" required />
+            <button type="submit">Submit Registration</button>
+          </form>
+          <p id="registrationMessage" style="color:green; font-weight:bold; display:none;"></p>
+        </div>
+      </div>
+    </section>
+    <section id="library-section" style="display:none;">
+      <h1>Library</h1>
+      <input type="text" id="bookSearch" placeholder="Search for books..." />
+      <button id="searchBtn">Search</button>
+      <ul id="bookList"></ul>
+    </section>
+    <section id="members-section" style="display:none;">
+      <h1>Association Members</h1>
+      <p>Details of association members will be shown here.</p>
+      <ul id="membersList"></ul>
+    </section>
+  </main>
+
+  <script>
+    // Get teacherEmail from URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const teacherEmail = urlParams.get('email');
+
+    // Navigation handling
+    const sections = {
+      home: document.getElementById('home-section'),
+      notifications: document.getElementById('notifications-section'),
+      calendar: document.getElementById('calendar-section'),
+      library: document.getElementById('library-section'),
+      members: document.getElementById('members-section')
+    };
+
+    function showSection(sectionKey) {
+      for (const key in sections) {
+        sections[key].style.display = (key === sectionKey) ? 'block' : 'none';
+      }
+    }
+
+    document.getElementById('nav-home').addEventListener('click', e => {
+      e.preventDefault();
+      showSection('home');
+    });
+    document.getElementById('nav-notifications').addEventListener('click', e => {
+      e.preventDefault();
+      showSection('notifications');
+      loadNotifications();
+    });
+    document.getElementById('nav-calendar').addEventListener('click', e => {
+      e.preventDefault();
+      showSection('calendar');
+      setTimeout(() => {
+        fetchEvents();
+        generateCalendar();
+      }, 50);
+    });
+    document.getElementById('nav-library').addEventListener('click', e => {
+      e.preventDefault();
+      showSection('library');
+    });
+    document.getElementById('nav-members').addEventListener('click', e => {
+      e.preventDefault();
+      showSection('members');
+      loadMembers();
+    });
+
+    // Initialize to home
+    showSection('home');
+
+    // Calendar data
+    let events = [];
+
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    // Fetch events from backend API
+    function fetchEvents() {
+      fetch('http://localhost:3000/events')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Fetched events:', data);
+          events = data;
+          generateCalendar(currentYear, currentMonth);
+        })
+        .catch(error => {
+          console.error('Error fetching events:', error);
+          // Fallback to empty events array
+          events = [];
+          generateCalendar(currentYear, currentMonth);
+        });
+    }
+
+    // Generate calendar for current month
+    function generateCalendar(year = currentYear, month = currentMonth) {
+      const calendarEl = document.getElementById('calendar');
+      calendarEl.innerHTML = '';
+
+      // Update month-year display
+      const monthYearDisplay = document.getElementById('monthYearDisplay');
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      monthYearDisplay.textContent = `${monthNames[month]} ${year}`;
+
+      // Days of week header
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      daysOfWeek.forEach(day => {
+        const dayEl = document.createElement('div');
+        dayEl.textContent = day;
+        calendarEl.appendChild(dayEl);
+      });
+
+      // First day of month
+      const firstDay = new Date(year, month, 1);
+      const startDay = firstDay.getDay();
+
+      // Number of days in month
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Fill empty slots before first day
+      for (let i = 0; i < startDay; i++) {
+        const emptyEl = document.createElement('div');
+        calendarEl.appendChild(emptyEl);
+      }
+
+      // Fill days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEl = document.createElement('div');
+        dayEl.textContent = day;
+        dayEl.classList.add('day');
+
+        // Check if event on this date by comparing year, month, day
+        const event = events.find(e => {
+          const eventDate = new Date(e.date);
+          return eventDate.getFullYear() === year &&
+                 eventDate.getMonth() === month &&
+                 eventDate.getDate() === day;
+        });
+        if (event) {
+          dayEl.style.fontWeight = 'bold';
+          dayEl.style.backgroundColor = '#a0522d';
+          dayEl.style.color = 'white';
+          dayEl.title = event.title;
+          dayEl.style.cursor = 'pointer';
+          dayEl.addEventListener('click', () => openEventModal(event));
+        }
+
+        calendarEl.appendChild(dayEl);
+      }
+    }
+
+    // Month navigation buttons
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      generateCalendar(currentYear, currentMonth);
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      generateCalendar(currentYear, currentMonth);
+    });
+
+    // Event modal handling
+    const eventModal = document.getElementById('eventModal');
+    const eventTitle = document.getElementById('eventTitle');
+    const eventDescription = document.getElementById('eventDescription');
+    const eventDate = document.getElementById('eventDate');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    function openEventModal(event) {
+      currentEvent = event;
+      eventTitle.textContent = event.title;
+      eventDescription.textContent = event.description;
+      eventDate.textContent = event.date;
+      registrationForm.style.display = 'none';
+      registrationMessage.style.display = 'none';
+      registerBtn.style.display = 'inline-block';
+      eventModal.style.display = 'flex';
+
+      // Update register button link dynamically
+      registerBtn.onclick = () => {
+        if (event.registration_link) {
+          window.open(event.registration_link, '_blank');
+        } else {
+          alert('Registration link not available for this event.');
+        }
+      };
+    }
+
+    closeModalBtn.addEventListener('click', () => {
+      eventModal.style.display = 'none';
+    });
+
+    registerBtn.addEventListener('click', () => {
+      registerBtn.style.display = 'none';
+      registrationForm.style.display = 'block';
+    });
+
+    registrationForm.addEventListener('submit', e => {
+      e.preventDefault();
+      // Simulate registration submission
+      registrationForm.style.display = 'none';
+      registrationMessage.textContent = `Thank you for registering for ${currentEvent.title}!`;
+      registrationMessage.style.display = 'block';
+      registrationForm.reset();
+    });
+
+    // Notifications placeholder
+    function loadNotifications() {
+      if (!teacherEmail) {
+        const notificationsList = document.getElementById('notificationsList');
+        notificationsList.innerHTML = '<p>Error: Teacher email not provided in URL.</p>';
+        return;
+      }
+      const notificationsList = document.getElementById('notificationsList');
+      notificationsList.innerHTML = '';
+      fetch(`http://localhost:3000/teacher-connect-requests?teacherEmail=${encodeURIComponent(teacherEmail)}`)
+        .then(response => response.json())
+        .then(requests => {
+          if (!requests || requests.length === 0) {
+            notificationsList.innerHTML = '<p>No connection requests.</p>';
+          } else {
+            requests.forEach(request => {
+              const div = document.createElement('div');
+              div.classList.add('notification');
+              div.textContent = `${request.student_email} wants to connect with you.`;
+              const acceptBtn = document.createElement('button');
+              acceptBtn.textContent = 'Accept';
+              acceptBtn.addEventListener('click', () => {
+                acceptConnectionRequest(request.id, request.student_email);
+                div.remove();
+              });
+              div.appendChild(acceptBtn);
+              notificationsList.appendChild(div);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching connection requests:', error);
+          notificationsList.innerHTML = '<p>Error loading connection requests.</p>';
+        });
+    }
+    function acceptConnectionRequest(requestId, studentEmail) {
+      fetch(`http://localhost:3000/accept-teacher-connect-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert('Error accepting connection request: ' + data.error);
+          } else {
+            // Open chat page with studentEmail and teacherEmail in query params
+            const url = `chat.html?studentEmail=${encodeURIComponent(studentEmail)}&teacherEmail=${encodeURIComponent(teacherEmail)}&role=teacher`;
+            window.open(url, '_blank');
+          }
+        })
+        .catch(error => {
+          console.error('Error accepting connection request:', error);
+          alert('Failed to accept connection request.');
+        });
+    }
+
+    // Teacher connect placeholder
+    function loadTeachers() {
+      const teacherList = document.getElementById('teacherList');
+      teacherList.innerHTML = '';
+      fetch('http://localhost:3000/teachers')
+        .then(response => response.json())
+        .then(teachers => {
+          teachers.forEach(teacher => {
+            const li = document.createElement('li');
+            li.style.listStyle = 'none';
+            li.style.marginBottom = '15px';
+            li.style.padding = '10px';
+            li.style.border = '1px solid #a0522d';
+            li.style.borderRadius = '8px';
+            li.style.backgroundColor = '#fff3e0';
+            li.style.display = 'flex';
+            li.style.alignItems = 'center';
+            li.style.justifyContent = 'space-between';
+
+            const teacherInfo = document.createElement('div');
+            teacherInfo.style.display = 'flex';
+            teacherInfo.style.alignItems = 'center';
+            teacherInfo.style.gap = '15px';
+
+            if (teacher.picture) {
+              const img = document.createElement('img');
+              img.src = teacher.picture;
+              img.alt = teacher.name;
+              img.style.width = '60px';
+              img.style.height = '60px';
+              img.style.borderRadius = '50%';
+              img.style.border = '2px solid #a0522d';
+              teacherInfo.appendChild(img);
+            }
+
+            const details = document.createElement('div');
+            details.style.color = '#5a2d0c';
+            details.style.fontWeight = 'bold';
+            details.innerHTML = `<div>${teacher.name}</div>
+              <div>Qualification: ${teacher.qualification || 'N/A'}</div>
+              <div>Class Handling: ${teacher.classHandling || 'N/A'}</div>
+              <div>Achievements: ${teacher.achievements || 'N/A'}</div>`;
+            teacherInfo.appendChild(details);
+
+            li.appendChild(teacherInfo);
+
+            const connectBtn = document.createElement('button');
+            connectBtn.textContent = 'Connect';
+            connectBtn.style.marginLeft = '10px';
+            connectBtn.style.backgroundColor = '#a0522d';
+            connectBtn.style.color = 'white';
+            connectBtn.style.border = 'none';
+            connectBtn.style.padding = '8px 15px';
+            connectBtn.style.borderRadius = '6px';
+            connectBtn.style.cursor = 'pointer';
+            connectBtn.style.fontWeight = 'bold';
+            connectBtn.addEventListener('mouseover', () => {
+              connectBtn.style.backgroundColor = '#deb887';
+            });
+            connectBtn.addEventListener('mouseout', () => {
+              connectBtn.style.backgroundColor = '#a0522d';
+            });
+            connectBtn.addEventListener('click', () => {
+              alert(`Connection request sent to ${teacher.email}`);
+              // TODO: Implement notification to teacher
+            });
+            li.appendChild(connectBtn);
+            teacherList.appendChild(li);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching teachers:', error);
+          teacherList.innerHTML = '<li>Error loading teachers.</li>';
+        });
+    }
+
+    // Library placeholder
+    let selectedBook = null;
+
+    // Book details modal for teacher dashboard
+    const bookDetailsModal = document.createElement('div');
+    bookDetailsModal.id = 'bookDetailsModal';
+    bookDetailsModal.style.position = 'fixed';
+    bookDetailsModal.style.top = '0';
+    bookDetailsModal.style.left = '0';
+    bookDetailsModal.style.width = '100%';
+    bookDetailsModal.style.height = '100%';
+    bookDetailsModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    bookDetailsModal.style.display = 'none';
+    bookDetailsModal.style.justifyContent = 'center';
+    bookDetailsModal.style.alignItems = 'center';
+    bookDetailsModal.style.zIndex = '3000';
+
+    const bookDetailsContent = document.createElement('div');
+    bookDetailsContent.style.backgroundColor = 'white';
+    bookDetailsContent.style.padding = '20px';
+    bookDetailsContent.style.borderRadius = '10px';
+    bookDetailsContent.style.maxWidth = '400px';
+    bookDetailsContent.style.width = '90%';
+    bookDetailsContent.style.position = 'relative';
+
+    const closeBookDetailsBtn = document.createElement('button');
+    closeBookDetailsBtn.textContent = 'Close';
+    closeBookDetailsBtn.style.position = 'absolute';
+    closeBookDetailsBtn.style.top = '10px';
+    closeBookDetailsBtn.style.right = '10px';
+    closeBookDetailsBtn.style.backgroundColor = 'burlywood';
+    closeBookDetailsBtn.style.border = 'none';
+    closeBookDetailsBtn.style.color = 'white';
+    closeBookDetailsBtn.style.padding = '8px 15px';
+    closeBookDetailsBtn.style.borderRadius = '5px';
+    closeBookDetailsBtn.style.cursor = 'pointer';
+    closeBookDetailsBtn.style.fontWeight = 'bold';
+    closeBookDetailsBtn.addEventListener('click', () => {
+      bookDetailsModal.style.display = 'none';
+    });
+
+    const bookTitleEl = document.createElement('h2');
+    const bookQuantityEl = document.createElement('p');
+    const requestBookBtn = document.createElement('button');
+    requestBookBtn.textContent = 'Request Book';
+    requestBookBtn.style.backgroundColor = 'burlywood';
+    requestBookBtn.style.border = 'none';
+    requestBookBtn.style.color = 'white';
+    requestBookBtn.style.padding = '10px 20px';
+    requestBookBtn.style.borderRadius = '8px';
+    requestBookBtn.style.fontWeight = 'bold';
+    requestBookBtn.style.cursor = 'pointer';
+    requestBookBtn.style.marginTop = '15px';
+    requestBookBtn.addEventListener('mouseover', () => {
+      requestBookBtn.style.backgroundColor = '#deb887';
+    });
+    requestBookBtn.addEventListener('mouseout', () => {
+      requestBookBtn.style.backgroundColor = 'burlywood';
+    });
+
+    const returnBookBtn = document.createElement('button');
+    returnBookBtn.textContent = 'Return Book';
+    returnBookBtn.style.backgroundColor = '#a0522d';
+    returnBookBtn.style.border = 'none';
+    returnBookBtn.style.color = 'white';
+    returnBookBtn.style.padding = '10px 20px';
+    returnBookBtn.style.borderRadius = '8px';
+    returnBookBtn.style.fontWeight = 'bold';
+    returnBookBtn.style.cursor = 'pointer';
+    returnBookBtn.style.marginTop = '15px';
+    returnBookBtn.style.marginLeft = '10px';
+    returnBookBtn.addEventListener('mouseover', () => {
+      returnBookBtn.style.backgroundColor = '#deb887';
+      returnBookBtn.style.color = '#a0522d';
+    });
+    returnBookBtn.addEventListener('mouseout', () => {
+      returnBookBtn.style.backgroundColor = '#a0522d';
+      returnBookBtn.style.color = 'white';
+    });
+
+    bookDetailsContent.appendChild(closeBookDetailsBtn);
+    bookDetailsContent.appendChild(bookTitleEl);
+    bookDetailsContent.appendChild(bookQuantityEl);
+    bookDetailsContent.appendChild(requestBookBtn);
+    bookDetailsContent.appendChild(returnBookBtn);
+    bookDetailsModal.appendChild(bookDetailsContent);
+    document.body.appendChild(bookDetailsModal);
+
+    function openBookDetails(book) {
+      selectedBook = book;
+      bookTitleEl.textContent = book.title;
+      bookQuantityEl.textContent = `Quantity available: ${book.available_copies}`;
+      bookDetailsModal.style.display = 'flex';
+    }
+
+    requestBookBtn.addEventListener('click', () => {
+      if (!selectedBook) return;
+      if (selectedBook.available_copies <= 0) {
+        alert('Sorry, this book is not available.');
+        return;
+      }
+      const teacherEmail = new URLSearchParams(window.location.search).get('email');
+      if (!teacherEmail) {
+        alert('Teacher email not found in URL.');
+        return;
+      }
+      fetch('http://localhost:3000/request-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId: selectedBook.id, userEmail: teacherEmail }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(`Error: ${data.error}`);
+          } else {
+            alert('Book requested successfully!');
+            // Update quantity locally and UI
+            selectedBook.available_copies -= 1;
+            bookQuantityEl.textContent = `Quantity available: ${selectedBook.available_copies}`;
+            // Optionally refresh book list
+            loadBooks();
+          }
+        })
+        .catch(error => {
+          console.error('Error requesting book:', error);
+          alert('Error requesting book.');
+        });
+    });
+
+    returnBookBtn.addEventListener('click', () => {
+      if (!selectedBook) return;
+      const teacherEmail = new URLSearchParams(window.location.search).get('email');
+      if (!teacherEmail) {
+        alert('Teacher email not found in URL.');
+        return;
+      }
+      fetch('http://localhost:3000/return-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId: selectedBook.id, userEmail: teacherEmail }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(`Error: ${data.error}`);
+          } else {
+            alert('Book returned successfully!');
+            // Update quantity locally and UI
+            selectedBook.available_copies += 1;
+            bookQuantityEl.textContent = `Quantity available: ${selectedBook.available_copies}`;
+            // Optionally refresh book list
+            loadBooks();
+          }
+        })
+        .catch(error => {
+          console.error('Error returning book:', error);
+          alert('Error returning book.');
+        });
+    });
+
+    function loadBooks() {
+      fetch('http://localhost:3000/books')
+        .then(response => response.json())
+        .then(books => {
+          const bookList = document.getElementById('bookList');
+          bookList.innerHTML = '';
+          books.forEach(book => {
+            const li = document.createElement('li');
+            li.style.cursor = 'pointer';
+            li.textContent = book.title;
+            li.addEventListener('click', () => {
+              openBookDetails(book);
+            });
+            bookList.appendChild(li);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching books:', error);
+          const bookList = document.getElementById('bookList');
+          bookList.innerHTML = '<li>Error loading books.</li>';
+        });
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      const query = document.getElementById('bookSearch').value.toLowerCase();
+      const bookList = document.getElementById('bookList');
+      bookList.innerHTML = '';
+      fetch('http://localhost:3000/books')
+        .then(response => response.json())
+        .then(books => {
+          const filteredBooks = books.filter(book => book.title.toLowerCase().includes(query));
+          if (filteredBooks.length === 0) {
+            bookList.innerHTML = '<li>No books found.</li>';
+          } else {
+            filteredBooks.forEach(book => {
+              const li = document.createElement('li');
+              li.textContent = book.title;
+              bookList.appendChild(li);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching books:', error);
+          bookList.innerHTML = '<li>Error loading books.</li>';
+        });
+    });
+
+    // Load all books initially
+    loadBooks();
+
+    // Association members placeholder
+    function loadMembers() {
+      fetch('http://localhost:3000/association-members')
+        .then(response => response.json())
+        .then(members => {
+          const membersList = document.getElementById('membersList');
+          membersList.innerHTML = '';
+          members.forEach(member => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${member.name}</strong> - ${member.role || 'Member'}`;
+            membersList.appendChild(li);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching members:', error);
+          const membersList = document.getElementById('membersList');
+          membersList.innerHTML = '<li>Error loading members.</li>';
+        });
+    }
+
+    // Load members on members section show
+    document.getElementById('nav-members').addEventListener('click', loadMembers);
+
+    // Generate calendar on page load
+    generateCalendar();
+    fetchEvents();
+  </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login Page</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: backgroundFade 10s infinite alternate;
+    }
+
+    @keyframes backgroundFade {
+      0% {
+        background-color: burlywood;
+      }
+      50% {
+        background-color: wheat;
+      }
+      100% {
+        background-color: white;
+      }
+    }
+
+    .container {
+      display: flex;
+      width: 700px;
+      height: 450px;
+      background-color: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .left-panel {
+      background-color: burlywood;
+      width: 40%;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    form {
+      width: 60%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      gap: 15px;
+      background-color: white;
+    }
+
+    label {
+      align-self: flex-start;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid burlywood;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #a0522d;
+      box-shadow: 0 0 5px #a0522d;
+    }
+
+    input[type="submit"] {
+      background-color: burlywood;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #deb887;
+      transform: scale(1.05);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    button {
+      flex: 1;
+      background-color: burlywood;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #deb887;
+      transform: scale(1.05);
+    }
+
+    /* Style the checkbox container */
+    .show-password {
+      align-self: flex-start;
+      font-size: 16px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: -10px;
+      font-weight: bold;
+    }
+
+    /* Hide the default checkbox */
+    .show-password input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid burlywood;
+      border-radius: 4px;
+      background-color: white;
+      cursor: pointer;
+      position: relative;
+    }
+
+    /* Checked state */
+    .show-password input[type="checkbox"]:checked::before {
+      content: '✔';
+      color: burlywood;
+      font-size: 14px;
+      position: absolute;
+      top: -1px;
+      left: 2px;
+    }
+
+    .error-message {
+      color: red;
+      font-weight: bold;
+      margin-top: 5px;
+      align-self: flex-start;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      Association Portal
+    </div>
+    <form id="loginForm" onsubmit="return validateForm(event)">
+      <label for="email">Enter your email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="pwd">Password:</label>
+      <input type="password" id="pwd" name="pwd" required>
+
+      <div class="show-password">
+        <input type="checkbox" id="showPwd" onclick="togglePassword()">
+        <label for="showPwd">Show Password</label>
+      </div>
+
+      <label for="userType">I am a:</label>
+      <select id="userType" name="userType" required>
+        <option value="" disabled selected>Select user type</option>
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+      </select>
+
+      <div class="error-message" id="errorMessage"></div>
+
+      <div class="buttons">
+        <button type="submit" name="action" value="signup">Sign Up</button>
+        <button type="submit" name="action" value="login">Login</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function togglePassword() {
+      var pwdInput = document.getElementById("pwd");
+      if (pwdInput.type === "password") {
+        pwdInput.type = "text";
+      } else {
+        pwdInput.type = "password";
+      }
+    }
+
+    // Removed password validation function as per user request
+
+    async function validateForm(event) {
+      event.preventDefault();
+      const emailInput = document.getElementById("email");
+      const pwdInput = document.getElementById("pwd");
+      const userTypeSelect = document.getElementById("userType");
+      const errorMessage = document.getElementById("errorMessage");
+      const email = emailInput.value.trim();
+      const password = pwdInput.value;
+      const userType = userTypeSelect.value;
+      const action = event.submitter.value;
+
+      // Check email domain
+      const domain = email.split('@')[1];
+      if (domain !== "psgtech.ac.in") {
+        errorMessage.textContent = "Only emails with domain 'psgtech.ac.in' are allowed.";
+        return false;
+      }
+
+      if (!userType) {
+        errorMessage.textContent = "Please select user type.";
+        return false;
+      }
+
+      // Removed password validation check as per user request
+      // if (!isValidPassword(password)) {
+      //   errorMessage.textContent = "Password must be at least 8 characters, including uppercase, lowercase, number, and special character.";
+      //   return false;
+      // }
+
+      errorMessage.textContent = "";
+
+      const url = action === "login" ? "http://localhost:3000/login" : "http://localhost:3000/signup";
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ email, password, userType })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorMessage.textContent = data.error || "An error occurred";
+          return false;
+        }
+
+        // On success, redirect to dashboard with email query param
+        if (userType === "student") {
+          window.location.href = `student_dashboard.html?email=${encodeURIComponent(email)}`;
+        } else {
+          window.location.href = `teacher_dashboard.html?email=${encodeURIComponent(email)}`;
+        }
+      } catch (error) {
+        errorMessage.textContent = "Failed to connect to server.";
+      }
+
+      return false;
+    }
+  </script>
+</body>
+</html>
